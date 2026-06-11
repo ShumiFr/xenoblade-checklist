@@ -1,44 +1,26 @@
-export type BadgeVariant = 'time' | 'warning' | 'info' | 'success' | 'neutral' | 'pink';
+export type TagType = 'h2h' | 'aff' | 'warn' | 'boss' | 'default';
 
-export interface Badge {
-   variant: BadgeVariant;
+export interface Tag {
    text: string;
+   type: TagType;
 }
 
 export interface ChecklistItemData {
    id: string;
    label: string;
-   note?: string;
-   badges?: Badge[];
+   desc?: string;
+   tags?: Tag[];
 }
 
-export interface GroupHeaderData {
-   type: 'header';
-   label: string;
-}
+export type ModuleIconKey =
+   | 'book-open' | 'map-pin' | 'users' | 'heart'
+   | 'scroll-text' | 'list-checks' | 'swords' | 'leaf';
 
-export type SectionItem = ChecklistItemData | GroupHeaderData;
-
-export type SectionColor = 'blue' | 'teal' | 'cyan' | 'pink' | 'orange' | 'violet' | 'red' | 'green';
-
-export type SectionIconKey =
-   | 'book-open'
-   | 'map-pin'
-   | 'users'
-   | 'heart'
-   | 'scroll-text'
-   | 'list-checks'
-   | 'sword'
-   | 'leaf';
-
-export interface SectionData {
+export interface ModuleData {
    id: string;
+   col: 'left' | 'right';
+   icon: ModuleIconKey;
+   color: string;   // hex
    title: string;
-   icon: SectionIconKey;
-   color: SectionColor;
-   items: SectionItem[];
-}
-
-export function isGroupHeader(item: SectionItem): item is GroupHeaderData {
-   return 'type' in item && item.type === 'header';
+   items: ChecklistItemData[];
 }

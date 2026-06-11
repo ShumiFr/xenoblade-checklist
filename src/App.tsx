@@ -1,137 +1,64 @@
-import { useState } from 'react';
-import { Gamepad2, RotateCcw } from 'lucide-react';
-import { chapter1Sections } from './data/chapter1';
-import { Section } from './components/Section';
-import { CircularProgress } from './components/CircularProgress';
-import { Toolbar } from './components/Toolbar';
-import { ChapterTabs } from './components/ChapterTabs';
+import { useState, useMemo } from 'react';
+import { chapter1Modules } from './data/chapter1';
 import { Sidebar } from './components/Sidebar';
+import { Header, ChapterTabs } from './components/Header';
+import { Toolbar } from './components/Toolbar';
+import { Section } from './components/Section';
 import { useChecklist } from './hooks/useChecklist';
-import { useTheme } from './contexts/useTheme';
-import { isGroupHeader, type ChecklistItemData } from './types';
-import type { Chapter } from './components/ChapterTabs';
-
-const CHAPTERS: Chapter[] = [
-  { id: 1, label: 'Chapitre 1', locked: false },
-  { id: 2, label: 'Chapitre 2', locked: true },
-  { id: 3, label: 'Chapitre 3', locked: true },
-  { id: 4, label: 'Chapitre 4', locked: true },
-  { id: 5, label: 'Chapitre 5', locked: true },
-];
 
 export default function App() {
-  const { checked, toggle, reset } = useChecklist();
-  const { theme } = useTheme();
+  const { checked, open, hideCompleted, toggle, toggleOpen, setAll, toggleHide, reset } = useChecklist();
+  const [query, setQuery] = useState('');
+  const q = query.trim().toLowerCase();
 
-  const [activeGame, setActiveGame] = useState('xenoblade');
-  const [activeChapter, setActiveChapter] = useState(1);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [hideCompleted, setHideCompleted] = useState(false);
-  const [openSections, setOpenSections] = useState<Set<string>>(new Set(['story']));
+  const { done, total, percent, isComplete } = useMemo(() => {
+    let d = 0, t = 0;
+    chapter1Modules.forEach(m => m.items.forEach(it => { t++; if (checked[it.id]) d++; }));
+    return { done: d, total: t, percent: t ? Math.round((d / t) * 100) : 0, isComplete: t > 0 && d === t };
+  }, [checked]);
 
-  const toggleSection = (id: string) => {
-    setOpenSections(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const hasResults = (id: string) => {
+    if (!q) return true;
+    const m = chapter1Modules.find(x => x.id === id);
+    return m?.items.some(it =>
+      (it.label + ' ' + (it.desc || '') + ' ' + (it.tags || []).map(t => t.text).join(' '))
+        .toLowerCase().includes(q)
+    ) ?? false;
   };
-  const expandAll = () => setOpenSections(new Set(chapter1Sections.map(s => s.id)));
-  const collapseAll = () => setOpenSections(new Set());
 
-  const allItems = chapter1Sections
-    .flatMap(s => s.items)
-    .filter((item): item is ChecklistItemData => !isGroupHeader(item));
-  const checkedCount = allItems.filter(item => checked.has(item.id)).length;
-
-  const storySection = chapter1Sections.filter(s => s.id === 'story');
-  const secondarySections = chapter1Sections.filter(s => s.id !== 'story');
+  const leftModules = chapter1Modules.filter(m => m.col === 'left' && hasResults(m.id));
+  const rightModules = chapter1Modules.filter(m => m.col === 'right' && hasResults(m.id));
+  const allIds = chapter1Modules.map(m => m.id);
 
   const sectionProps = (id: string) => ({
-    checked,
-    onToggle: toggle,
-    isOpen: openSections.has(id),
-    onToggleOpen: () => toggleSection(id),
-    searchQuery,
-    hideCompleted,
+    checked, isOpen: !!open[id],
+    onToggleOpen: toggleOpen, onToggleItem: toggle,
+    query, hideCompleted,
   });
 
   return (
-    <div
-      className="flex min-h-screen transition-colors duration-300"
-      style={{ background: theme.bodyGradient }}
-    >
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'radial-gradient(1200px 500px at 100% -140px, var(--accent-soft), transparent 62%), var(--bg)' }}>
+      <Sidebar />
+      <main style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ maxWidth: '1160px', margin: '0 auto', padding: '34px 36px 90px' }}>
 
-      {/* Sidebar */}
-      <Sidebar activeGame={activeGame} onSelectGame={setActiveGame} />
+          <Header percent={percent} done={done} total={total} isComplete={isComplete} onReset={reset} />
+          <ChapterTabs active={1} />
+          <Toolbar query={query} onSearch={setQuery} hideCompleted={hideCompleted}
+            onToggleHide={toggleHide} onExpandAll={() => setAll(allIds, true)} onCollapseAll={() => setAll(allIds, false)} />
 
-      {/* Contenu principal */}
-      <main className="flex-1 min-w-0 overflow-auto lg:ml-56">
-        <div className="max-w-5xl mx-auto px-6 py-8 pb-20">
-
-          {/* Header */}
-          <div className="mb-8">
-            <div className="flex items-start gap-5">
-              <CircularProgress checked={checkedCount} total={allItems.length} />
-              <div className="flex-1 min-w-0 pt-1">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <Gamepad2 size={14} className={`${theme.circle} shrink-0`} />
-                  <span className="text-xs text-slate-500 font-medium">
-                    Xenoblade Chronicles: Definitive Edition
-                  </span>
-                </div>
-                <h1 className="text-2xl font-bold text-slate-100 tracking-tight leading-tight mb-1.5">
-                  Chapitre 1 — Le Réveil du Monado
-                </h1>
-                <p className="text-sm text-slate-500">
-                  {checkedCount} sur {allItems.length} tâches complétées dans ce chapitre
-                </p>
+          <div style={{ marginTop: '24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '26px', alignItems: 'start' }}>
+            <div>
+              <div style={{ fontSize: '11px', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--faint)', fontWeight: 700, margin: '0 0 14px 2px' }}>Histoire principale</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                {leftModules.map(m => <Section key={m.id} module={m} {...sectionProps(m.id)} />)}
               </div>
-              <button
-                onClick={reset}
-                className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-200 px-3 py-2 rounded-lg border border-slate-700 hover:border-slate-600 transition-colors shrink-0 mt-1"
-              >
-                <RotateCcw size={13} />
-                Réinitialiser
-              </button>
             </div>
-          </div>
-
-          {/* Onglets */}
-          <ChapterTabs
-            chapters={CHAPTERS}
-            activeId={activeChapter}
-            onSelect={setActiveChapter}
-          />
-
-          {/* Toolbar */}
-          <Toolbar
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            hideCompleted={hideCompleted}
-            onToggleHideCompleted={() => setHideCompleted(prev => !prev)}
-            onExpandAll={expandAll}
-            onCollapseAll={collapseAll}
-          />
-
-          {/* Layout 2 colonnes */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:items-start">
-            <div className="space-y-2.5">
-              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 px-1 mb-3">
-                Histoire principale
-              </p>
-              {storySection.map(section => (
-                <Section key={section.id} section={section} {...sectionProps(section.id)} />
-              ))}
-            </div>
-            <div className="space-y-2.5">
-              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 px-1 mb-3">
-                Contenu secondaire
-              </p>
-              {secondarySections.map(section => (
-                <Section key={section.id} section={section} {...sectionProps(section.id)} />
-              ))}
+            <div>
+              <div style={{ fontSize: '11px', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--faint)', fontWeight: 700, margin: '0 0 14px 2px' }}>Contenu secondaire</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                {rightModules.map(m => <Section key={m.id} module={m} {...sectionProps(m.id)} />)}
+              </div>
             </div>
           </div>
 

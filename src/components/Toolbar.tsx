@@ -1,69 +1,70 @@
-import { Search, ChevronsDown, ChevronsUp } from 'lucide-react';
-import { useTheme } from '../contexts/useTheme';
+import { useState } from 'react';
+import { Icon } from './Icon';
 
 interface Props {
-   searchQuery: string;
-   onSearchChange: (q: string) => void;
+   query: string;
+   onSearch: (v: string) => void;
    hideCompleted: boolean;
-   onToggleHideCompleted: () => void;
+   onToggleHide: () => void;
    onExpandAll: () => void;
    onCollapseAll: () => void;
 }
 
-export function Toolbar({
-   searchQuery,
-   onSearchChange,
-   hideCompleted,
-   onToggleHideCompleted,
-   onExpandAll,
-   onCollapseAll,
-}: Props) {
-   const { theme } = useTheme();
+function ToolBtn({ icon, label, onClick }: { icon: string; label: string; onClick: () => void }) {
+   const [hover, setHover] = useState(false);
    return (
-      <div className="flex items-center gap-3 mb-6 flex-wrap">
+      <button onClick={onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+         style={{
+            display: 'inline-flex', alignItems: 'center', gap: '7px',
+            background: 'var(--panel)', border: '1px solid',
+            borderColor: hover ? 'var(--accent-line)' : 'var(--border-2)',
+            color: hover ? 'var(--text)' : 'var(--dim)',
+            fontFamily: 'inherit', fontSize: '12.5px', fontWeight: 600,
+            padding: '9px 13px', borderRadius: '10px', cursor: 'pointer', transition: 'all .15s',
+         }}
+      >
+         <Icon name={icon} size={15} /> {label}
+      </button>
+   );
+}
 
+export function Toolbar({ query, onSearch, hideCompleted, onToggleHide, onExpandAll, onCollapseAll }: Props) {
+   const [focus, setFocus] = useState(false);
 
-         {/* Barre de recherche */}
-         <div className="relative flex-1 min-w-48">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
-            <input
-               type="text"
-               placeholder="Rechercher une tâche, un PNJ..."
-               value={searchQuery}
-               onChange={e => onSearchChange(e.target.value)}
-               className="w-full bg-slate-800/60 border border-slate-700 rounded-lg pl-9 pr-4 py-2 text-sm text-slate-300 placeholder-slate-500 focus:outline-none focus:border-slate-500 transition-colors"
+   return (
+      <div style={{ display: 'flex', gap: '14px', alignItems: 'center', flexWrap: 'wrap', marginTop: '20px' }}>
+         {/* Recherche */}
+         <div style={{ position: 'relative', flex: 1, minWidth: '230px', maxWidth: '400px' }}>
+            <span style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: 'var(--faint)', pointerEvents: 'none', display: 'grid' }}>
+               <Icon name="search" size={16} />
+            </span>
+            <input value={query} onChange={e => onSearch(e.target.value)}
+               onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}
+               placeholder="Rechercher une tâche, un PNJ, une quête…"
+               style={{
+                  width: '100%', background: 'var(--panel)',
+                  border: `1px solid ${focus ? 'var(--accent-line)' : 'var(--border-2)'}`,
+                  borderRadius: '11px', color: 'var(--text)', fontFamily: 'inherit',
+                  fontSize: '13.5px', padding: '11px 14px 11px 40px', outline: 'none', transition: 'border-color .15s',
+               }}
             />
          </div>
 
-         {/* Toggle masquer terminées */}
-         <button
-            onClick={onToggleHideCompleted}
-            className="flex items-center gap-2.5 text-sm text-slate-400 hover:text-slate-200 transition-colors shrink-0"
-         >
-            <span className={`relative inline-flex w-10 h-5 rounded-full transition-colors duration-200 shrink-0 ${hideCompleted ? theme.toggle : 'bg-slate-700'}`} >
-               <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform duration-200 shadow-sm ${hideCompleted ? 'translate-x-5' : 'translate-x-0'}`} />
+         {/* Toggle */}
+         <button onClick={onToggleHide} style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '13px', fontWeight: 600, color: 'var(--text-2)', padding: '6px 2px' }}>
+            <span style={{ display: 'inline-block', width: '36px', height: '21px', borderRadius: '999px', position: 'relative', flexShrink: 0, transition: 'background .2s', border: '1px solid var(--border-2)', background: hideCompleted ? 'var(--accent)' : 'var(--panel-hi)' }}>
+               <span style={{ position: 'absolute', top: '2px', left: '2px', width: '15px', height: '15px', borderRadius: '50%', background: '#fff', transition: 'transform .2s', transform: `translateX(${hideCompleted ? '15px' : '0'})` }} />
             </span>
-            Masquer les terminées
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', color: 'var(--dim)' }}>
+               <Icon name="eye-off" size={15} /> Masquer les tâches terminées
+            </span>
          </button>
 
-         {/* Expand / Collapse all */}
-         <div className="flex items-center gap-1.5 shrink-0">
-            <button
-               onClick={onExpandAll}
-               className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 px-3 py-2 rounded-lg border border-slate-700 hover:border-slate-600 transition-colors"
-            >
-               <ChevronsDown size={14} />
-               Tout déplier
-            </button>
-            <button
-               onClick={onCollapseAll}
-               className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 px-3 py-2 rounded-lg border border-slate-700 hover:border-slate-600 transition-colors"
-            >
-               <ChevronsUp size={14} />
-               Tout replier
-            </button>
+         <div style={{ flex: 1 }} />
+         <div style={{ display: 'flex', gap: '8px' }}>
+            <ToolBtn icon="chevrons-up-down" label="Tout déplier" onClick={onExpandAll} />
+            <ToolBtn icon="chevrons-down-up" label="Tout replier" onClick={onCollapseAll} />
          </div>
-
       </div>
    );
 }

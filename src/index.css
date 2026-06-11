@@ -1,1 +1,68 @@
-@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap");
+@import "tailwindcss/preflight";
+
+:root {
+   --bg: #0a0c11;
+   --panel: #0f1218;
+   --panel-2: #13171f;
+   --panel-hi: #181d27;
+   --row-hover: rgba(255, 255, 255, 0.025);
+   --border: rgba(255, 255, 255, 0.06);
+   --border-2: rgba(255, 255, 255, 0.09);
+   --text: #e9ecf2;
+   --text-2: #b6bdca;
+   --dim: #79808f;
+   --faint: #535a68;
+   --accent: #5b8def;
+   --accent-2: #3f72e0;
+   --accent-soft: rgba(91, 141, 239, 0.12);
+   --accent-line: rgba(91, 141, 239, 0.32);
+   --on-accent: #08101f;
+}
+
+* {
+   box-sizing: border-box;
+}
+html,
+body {
+   margin: 0;
+   padding: 0;
+}
+body {
+   background: var(--bg);
+   color: var(--text);
+   font-family:
+      "Plus Jakarta Sans",
+      system-ui,
+      -apple-system,
+      sans-serif;
+   -webkit-font-smoothing: antialiased;
+   letter-spacing: -0.005em;
+}
+
+::selection {
+   background: var(--accent-soft);
+}
+input::placeholder {
+   color: var(--faint);
+}
+::-webkit-scrollbar {
+   width: 10px;
+   height: 10px;
+}
+::-webkit-scrollbar-thumb {
+   background: var(--border-2);
+   border-radius: 99px;
+   border: 3px solid transparent;
+   background-clip: padding-box;
+}
+
+@keyframes ringPulse {
+   0%,
+   100% {
+      box-shadow: 0 0 0 0 var(--accent-soft);
+   }
+   50% {
+      box-shadow: 0 0 0 8px transparent;
+   }
+}

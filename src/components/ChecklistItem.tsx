@@ -1,7 +1,6 @@
-import { Check } from 'lucide-react';
 import { useState } from 'react';
-import { Badge } from './Badge';
-import { useTheme } from '../contexts/useTheme';
+import { Icon } from './Icon';
+import { tagStyle, tagDotStyle } from '../lib/tags';
 import type { ChecklistItemData } from '../types';
 
 interface Props {
@@ -11,44 +10,54 @@ interface Props {
 }
 
 export function ChecklistItem({ item, isChecked, onToggle }: Props) {
-   const { theme } = useTheme();
-   const [hovered, setHovered] = useState(false);
+   const [hover, setHover] = useState(false);
 
    return (
-      <label
-         className="flex items-start gap-2.5 px-3.5 py-2 cursor-pointer transition-colors"
-         style={{ backgroundColor: hovered ? theme.itemHover : 'transparent' }}
-         onMouseEnter={() => setHovered(true)}
-         onMouseLeave={() => setHovered(false)}
+      <div role="button" onClick={() => onToggle(item.id)}
+         onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+         style={{
+            display: 'flex', gap: '13px', alignItems: 'flex-start',
+            padding: '10px 11px', borderRadius: '10px', cursor: 'pointer',
+            transition: 'background .12s',
+            background: hover ? 'var(--row-hover)' : 'transparent',
+         }}
       >
-         {/* Checkbox custom */}
-         <div
-            onClick={() => onToggle(item.id)}
-            className={`
-          mt-0.5 w-4 h-4 rounded shrink-0 border flex items-center justify-center
-          transition-colors cursor-pointer
-          ${isChecked
-                  ? `${theme.accent} border-transparent`
-                  : 'bg-transparent border-slate-600 hover:border-slate-400'
-               }
-        `}
-         >
-            {isChecked && <Check size={10} className="text-white stroke-3" />}
-         </div>
+         {/* Checkbox */}
+         <span style={{
+            marginTop: '1px', width: '20px', height: '20px', borderRadius: '6px',
+            border: '1.75px solid var(--border-2)', display: 'grid', placeItems: 'center',
+            flexShrink: 0, transition: 'all .15s',
+            ...(isChecked ? { borderColor: 'var(--accent)', background: 'var(--accent)' } : {}),
+         }}>
+            <span style={{ display: 'grid', color: 'var(--on-accent)', opacity: isChecked ? 1 : 0, transform: `scale(${isChecked ? 1 : 0.6})`, transition: 'all .15s' }}>
+               <Icon name="check" size={13} strokeWidth={3} />
+            </span>
+         </span>
 
-         <div className="flex-1 min-w-0">
-            <p className={`text-sm leading-relaxed transition-colors ${isChecked ? 'line-through text-slate-600' : 'text-slate-300'
-               }`}>
-               {item.badges?.map((badge, i) => <Badge key={i} {...badge} />)}
-               {item.label}
-            </p>
-            {item.note && (
-               <p className={`text-xs mt-0.5 leading-relaxed ${isChecked ? 'text-slate-700' : 'text-slate-500'
-                  }`}>
-                  {item.note}
-               </p>
+         {/* Contenu */}
+         <span style={{ minWidth: 0, flex: 1 }}>
+            <span style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '7px' }}>
+               {item.tags?.map((tag, i) => (
+                  <span key={i} style={tagStyle(tag.type)}>
+                     <span style={tagDotStyle(tag.type)} />
+                     {tag.text}
+                  </span>
+               ))}
+               <span style={{
+                  fontSize: '14px', lineHeight: 1.45,
+                  ...(isChecked
+                     ? { color: 'var(--faint)', textDecoration: 'line-through', textDecorationColor: 'var(--faint)' }
+                     : { color: 'var(--text)' }),
+               }}>
+                  {item.label}
+               </span>
+            </span>
+            {item.desc && (
+               <span style={{ display: 'block', fontSize: '12.5px', color: 'var(--dim)', lineHeight: 1.55, marginTop: '3px', opacity: isChecked ? 0.45 : 1 }}>
+                  {item.desc}
+               </span>
             )}
-         </div>
-      </label>
+         </span>
+      </div>
    );
 }
