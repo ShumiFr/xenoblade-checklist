@@ -11,23 +11,31 @@ export function useAuth() {
          setUser(session?.user ?? null);
          setLoading(false);
       });
-
       const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
          setUser(session?.user ?? null);
       });
-
       return () => subscription.unsubscribe();
    }, []);
 
-   const signInWithEmail = async (email: string) => {
-      const { error } = await supabase.auth.signInWithOtp({
-         email,
-         options: { emailRedirectTo: window.location.origin },
+   const signInWithGoogle = async () => {
+      const { error } = await supabase.auth.signInWithOAuth({
+         provider: 'google',
+         options: { redirectTo: window.location.origin },
       });
+      return { error };
+   };
+
+   const signInWithPassword = async (email: string, password: string) => {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      return { error };
+   };
+
+   const signUpWithPassword = async (email: string, password: string) => {
+      const { error } = await supabase.auth.signUp({ email, password });
       return { error };
    };
 
    const signOut = () => supabase.auth.signOut();
 
-   return { user, loading, signInWithEmail, signOut };
+   return { user, loading, signInWithGoogle, signInWithPassword, signUpWithPassword, signOut };
 }

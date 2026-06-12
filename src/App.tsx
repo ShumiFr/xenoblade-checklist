@@ -9,7 +9,7 @@ import { useChecklist } from './hooks/useChecklist';
 import { useAuth } from './hooks/useAuth';
 
 export default function App() {
-  const { user, loading, signInWithEmail, signOut } = useAuth();
+  const { user, loading, signInWithGoogle, signInWithPassword, signUpWithPassword, signOut } = useAuth();
   const [activeChapter, setActiveChapter] = useState(1);
   const [query, setQuery] = useState('');
 
@@ -51,7 +51,13 @@ export default function App() {
     </div>
   );
 
-  if (!user) return <AuthGate onSignIn={signInWithEmail} />;
+  if (!user) return (
+    <AuthGate
+      onGoogle={signInWithGoogle}
+      onSignIn={signInWithPassword}
+      onSignUp={signUpWithPassword}
+    />
+  );
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'radial-gradient(1200px 500px at 100% -140px, var(--accent-soft), transparent 62%), var(--bg)' }}>
