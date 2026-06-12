@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Icon } from './Icon';
 import { Ring } from './Ring';
+import { CHAPTERS_DATA } from '../data/index';
 
 interface HeaderProps {
    percent: number;
@@ -8,13 +9,14 @@ interface HeaderProps {
    total: number;
    isComplete: boolean;
    onReset: () => void;
+   title: string;
+   subtitle: string;
 }
 
 function ResetButton({ onReset }: { onReset: () => void }) {
    const [hover, setHover] = useState(false);
    return (
-      <button onClick={onReset}
-         onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+      <button onClick={onReset} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
          style={{
             display: 'inline-flex', alignItems: 'center', gap: '8px',
             background: 'transparent', border: '1px solid',
@@ -29,7 +31,7 @@ function ResetButton({ onReset }: { onReset: () => void }) {
    );
 }
 
-export function Header({ percent, done, total, isComplete, onReset }: HeaderProps) {
+export function Header({ percent, done, total, isComplete, onReset, title, subtitle }: HeaderProps) {
    return (
       <div style={{ display: 'flex', alignItems: 'center', gap: '22px', flexWrap: 'wrap' }}>
          <div style={{ position: 'relative', width: '78px', height: '78px', flexShrink: 0 }}>
@@ -48,12 +50,12 @@ export function Header({ percent, done, total, isComplete, onReset }: HeaderProp
                </span>
                Xenoblade Chronicles: Definitive Edition
             </div>
-            <h1 style={{ fontSize: '28px', fontWeight: 800, margin: '6px 0 0', letterSpacing: '-0.03em', lineHeight: 1.1, color: 'var(--text)' }}>
-               Chapitre 1 — Le Réveil du Monado
+            <h1 style={{ fontSize: '26px', fontWeight: 800, margin: '5px 0 0', letterSpacing: '-0.03em', lineHeight: 1.1, color: 'var(--text)' }}>
+               {title}
             </h1>
-            <div style={{ color: 'var(--dim)', fontSize: '14px', marginTop: '6px' }}>
+            <div style={{ color: 'var(--dim)', fontSize: '13px', marginTop: '5px' }}>
                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, color: 'var(--text-2)' }}>{done}</span> sur{' '}
-               <span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{total}</span> tâches complétées dans ce chapitre
+               <span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{total}</span> tâches complétées · {subtitle}
             </div>
          </div>
 
@@ -65,7 +67,7 @@ export function Header({ percent, done, total, isComplete, onReset }: HeaderProp
                   border: '1px solid var(--accent-line)', padding: '8px 13px', borderRadius: '10px',
                   animation: 'ringPulse 2s ease-in-out infinite',
                }}>
-                  <Icon name="trophy" size={15} /> Chapitre complété
+                  <Icon name="trophy" size={15} /> Chapitre complété !
                </span>
             )}
             <ResetButton onReset={onReset} />
@@ -74,26 +76,33 @@ export function Header({ percent, done, total, isComplete, onReset }: HeaderProp
    );
 }
 
-export function ChapterTabs({ active }: { active: number }) {
+interface ChapterTabsProps {
+   active: number;
+   onSelect: (id: number) => void;
+}
+
+export function ChapterTabs({ active, onSelect }: ChapterTabsProps) {
    return (
       <div style={{ display: 'flex', gap: '7px', marginTop: '26px', flexWrap: 'wrap', borderBottom: '1px solid var(--border)', paddingBottom: '18px' }}>
-         {[1, 2, 3, 4, 5].map(n => {
-            const isActive = n === active;
-            const locked = n > 1;
+         {CHAPTERS_DATA.map(ch => {
+            const isActive = ch.id === active;
             return (
-               <button key={n} style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '7px',
-                  fontFamily: 'inherit', fontSize: '13px', fontWeight: 600,
-                  padding: '8px 15px', borderRadius: '9px', transition: 'all .15s',
-                  cursor: locked ? 'default' : 'pointer', border: '1px solid',
-                  ...(isActive
-                     ? { borderColor: 'transparent', background: 'var(--accent)', color: 'var(--on-accent)' }
-                     : locked
-                        ? { borderColor: 'var(--border)', background: 'transparent', color: 'var(--faint)' }
-                        : { borderColor: 'var(--border-2)', background: 'var(--panel)', color: 'var(--text-2)' }),
-               }}>
-                  {locked && <span style={{ display: 'grid', placeItems: 'center', color: 'var(--faint)' }}><Icon name="lock" size={12} /></span>}
-                  Chapitre {n}
+               <button key={ch.id}
+                  onClick={() => !ch.locked && onSelect(ch.id)}
+                  style={{
+                     display: 'inline-flex', alignItems: 'center', gap: '7px',
+                     fontFamily: 'inherit', fontSize: '13px', fontWeight: 600,
+                     padding: '8px 15px', borderRadius: '9px', transition: 'all .15s',
+                     cursor: ch.locked ? 'not-allowed' : 'pointer', border: '1px solid',
+                     ...(isActive
+                        ? { borderColor: 'transparent', background: 'var(--accent)', color: 'var(--on-accent)' }
+                        : ch.locked
+                           ? { borderColor: 'var(--border)', background: 'transparent', color: 'var(--faint)' }
+                           : { borderColor: 'var(--border-2)', background: 'var(--panel)', color: 'var(--text-2)' }),
+                  }}
+               >
+                  {ch.locked && <span style={{ display: 'grid', placeItems: 'center', color: 'var(--faint)' }}><Icon name="lock" size={12} /></span>}
+                  Chapitre {ch.id}
                </button>
             );
          })}
