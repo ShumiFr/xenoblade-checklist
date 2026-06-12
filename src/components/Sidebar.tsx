@@ -10,6 +10,11 @@ const GAMES = [
    { name: 'Elden Ring', active: false, locked: true },
 ];
 
+interface Props {
+   userEmail?: string;
+   onSignOut: () => void;
+}
+
 function GameBtn({ name, active, locked }: { name: string; active: boolean; locked: boolean }) {
    const [hover, setHover] = useState(false);
    return (
@@ -36,7 +41,7 @@ function GameBtn({ name, active, locked }: { name: string; active: boolean; lock
    );
 }
 
-export function Sidebar() {
+export function Sidebar({ userEmail, onSignOut }: Props) {
    const { themeKey, setTheme } = useTheme();
 
    return (
@@ -72,6 +77,23 @@ export function Sidebar() {
          </nav>
 
          <div style={{ flex: 1 }} />
+
+         <div style={{ borderTop: '1px solid var(--border)', paddingTop: '14px', marginTop: '14px' }}>
+            <div style={{ padding: '0 8px 10px' }}>
+               <div style={{ fontSize: '11px', color: 'var(--faint)', fontWeight: 500, marginBottom: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {userEmail}
+               </div>
+               <button onClick={onSignOut} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '7px',
+                  background: 'none', border: '1px solid var(--border-2)',
+                  color: 'var(--dim)', fontFamily: 'inherit', fontSize: '12px',
+                  fontWeight: 600, padding: '6px 11px', borderRadius: '8px',
+                  cursor: 'pointer', transition: 'all .15s',
+               }}>
+                  <Icon name="rotate-ccw" size={13} /> Déconnexion
+               </button>
+            </div>
+         </div>
 
          {/* Thème */}
          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '14px', marginTop: '14px' }}>

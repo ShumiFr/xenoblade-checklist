@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
+import { supabase } from '../lib/supabase';
 
 const KEY = 'tracker2:xeno:ch1';
 
@@ -13,59 +14,106 @@ function loadSettings() {
    } catch { return { open: { story: true }, hideCompleted: false }; }
 }
 
-export function useChecklist() {
-   const [checked, setChecked] = useState<Record<string, 1>>(loadChecked);
+interface State {
+   checked: Record<string, 1>;
+   open: Record<string, boolean>;
+   hideCompleted: boolean;
+}
+
+export function useChecklist(userId?: string) {
    const initial = loadSettings();
-   const [open, setOpen] = useState<Record<string, boolean>>(initial.open);
-   const [hideCompleted, setHideCompleted] = useState(initial.hideCompleted);
+   const [state, setState] = useState<State>({
+      checked: loadChecked(),
+      open: initial.open,
+      hideCompleted: initial.hideCompleted,
+   });
+   const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+   const [synced, setSynced] = useState(false);
 
-   const persistChecked = (next: Record<string, 1>) => {
-      try { localStorage.setItem(KEY + ':checked', JSON.stringify(next)); } catch { /**/ }
-   };
-   const persistSettings = (o: Record<string, boolean>, h: boolean) => {
-      try { localStorage.setItem(KEY + ':settings', JSON.stringify({ open: o, hideCompleted: h })); } catch { /**/ }
-   };
+   if (userId && !synced) {
+      setSynced(true);
+      supabase.from('progress').select('*').eq('user_id', userId).single()
+         .then(({ data }) => {
+            if (data) {
+               setState({
+                  checked: data.checked || {},
+                  open: data.open_sections || { story: true },
+                  hideCompleted: data.hide_completed || false,
+               });
+               localStorage.setItem(KEY + ':checked', JSON.stringify(data.checked || {}));
+            }
+         });
+   }
 
+   // ✅ saveToCloud en useCallback
+   const saveToCloud = useCallback((next: State) => {
+      if (!userId) return;
+      clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(() => {
+         supabase.from('progress').upsert({
+            user_id: userId,
+            checked: next.checked,
+            open_sections: next.open,
+            hide_completed: next.hideCompleted,
+            updated_at: new Date().toISOString(),
+         });
+      }, 800);
+   }, [userId]);
+
+   // ✅ persist en useCallback — dépend de saveToCloud
+   const persist = useCallback((next: State) => {
+      localStorage.setItem(KEY + ':checked', JSON.stringify(next.checked));
+      localStorage.setItem(KEY + ':settings', JSON.stringify({ open: next.open, hideCompleted: next.hideCompleted }));
+      saveToCloud(next);
+   }, [saveToCloud]);
+
+   // ✅ Tous les callbacks dépendent de persist
    const toggle = useCallback((id: string) => {
-      setChecked(prev => {
-         const next = { ...prev };
-         if (next[id]) delete next[id]; else next[id] = 1;
-         persistChecked(next);
+      setState(prev => {
+         const checked = { ...prev.checked };
+         if (checked[id]) delete checked[id]; else checked[id] = 1;
+         const next = { ...prev, checked };
+         persist(next);
          return next;
       });
-   }, []);
+   }, [persist]);
 
    const toggleOpen = useCallback((id: string) => {
-      setOpen(prev => {
-         const next = { ...prev, [id]: !prev[id] };
-         persistSettings(next, hideCompleted);
+      setState(prev => {
+         const next = { ...prev, open: { ...prev.open, [id]: !prev.open[id] } };
+         persist(next);
          return next;
       });
-   }, [hideCompleted]);
+   }, [persist]);
 
    const setAll = useCallback((ids: string[], value: boolean) => {
-      setOpen(() => {
-         const next: Record<string, boolean> = {};
-         ids.forEach(id => { next[id] = value; });
-         persistSettings(next, hideCompleted);
+      setState(prev => {
+         const open: Record<string, boolean> = {};
+         ids.forEach(id => { open[id] = value; });
+         const next = { ...prev, open };
+         persist(next);
          return next;
       });
-   }, [hideCompleted]);
+   }, [persist]);
 
    const toggleHide = useCallback(() => {
-      setHideCompleted(prev => {
-         const next = !prev;
-         persistSettings(open, next);
+      setState(prev => {
+         const next = { ...prev, hideCompleted: !prev.hideCompleted };
+         persist(next);
          return next;
       });
-   }, [open]);
+   }, [persist]);
 
+   // ✅ reset utilise setState updater (plus de dépendance sur `state`)
    const reset = useCallback(() => {
       if (window.confirm('Réinitialiser toute la progression du Chapitre 1 ?')) {
-         setChecked({});
-         persistChecked({});
+         setState(prev => {
+            const next = { ...prev, checked: {} };
+            persist(next);
+            return next;
+         });
       }
-   }, []);
+   }, [persist]);
 
-   return { checked, open, hideCompleted, toggle, toggleOpen, setAll, toggleHide, reset };
+   return { ...state, toggle, toggleOpen, setAll, toggleHide, reset };
 }
