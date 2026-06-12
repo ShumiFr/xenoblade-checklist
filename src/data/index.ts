@@ -1,5 +1,6 @@
 import { chapter1Modules } from './chapter1';
 import { chapter2Modules } from './chapter2';
+import { chapter3Modules } from './chapter3';
 import type { ModuleData } from '../types';
 
 export interface ChapterInfo {
@@ -25,7 +26,13 @@ export const CHAPTERS_DATA: ChapterInfo[] = [
       locked: false,
       modules: chapter2Modules,
    },
-   { id: 3, title: 'Chapitre 3 — Tephra Cave (Revisité)', subtitle: 'À venir…', locked: true, modules: [] },
+   {
+      id: 3,
+      title: 'Chapitre 3 — Retour à Tephra Cave',
+      subtitle: 'Tephra Cave & Villa Lake',
+      locked: false,
+      modules: chapter3Modules,
+   },
    { id: 4, title: "Chapitre 4 — La Jambe du Bionis", subtitle: 'À venir…', locked: true, modules: [] },
    { id: 5, title: "Chapitre 5 — La Mine d'Éther", subtitle: 'À venir…', locked: true, modules: [] },
 ];
